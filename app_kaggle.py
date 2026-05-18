@@ -1,32 +1,5 @@
-"""
-VQA Food Demo — Kaggle Edition
-===============================
-Chạy trên Kaggle Notebook (T4 x2, Internet ON).
-
-CÁCH DÙNG:
-  1. Upload notebook này lên Kaggle.
-  2. Add dataset chứa checkpoints (xem KAGGLE_DATASET_SLUG bên dưới).
-  3. Bật Accelerator = GPU T4 x2  +  Internet = ON.
-  4. Chạy toàn bộ notebook.
-  5. Gradio sẽ in ra public URL dạng: https://xxxx.gradio.live
-
-CẤU TRÚC DATASET TRÊN KAGGLE (input):
-  /kaggle/input/<slug>/
-      data/
-          annotations/train.json
-          annotations/test.json
-          images/...
-      checkpoints/
-          best_model_A1.pth
-          best_model_A2.pth
-          qwen2vl_lora_b2/adapter_best/   ← LoRA adapter
-      results/
-          results_A.json
-          results_B.json
-"""
-
 # ════════════════════════════════════════════════════════════════════════════
-# KAGGLE SETUP — cài package còn thiếu (chạy lần đầu ~2 phút)
+# KAGGLE SETUP
 # ════════════════════════════════════════════════════════════════════════════
 import subprocess, sys, os
 
@@ -1148,8 +1121,8 @@ demo = build_app()
 demo.launch(
     server_name = "0.0.0.0",
     server_port = 7860,
-    share       = True,       # ← BẮT BUỘC trên Kaggle để lấy public URL
-    inbrowser   = False,      # ← Không mở browser trên Kaggle
+    share       = True,      
+    inbrowser   = False,      
     debug       = False,
     show_error  = True,
     quiet       = False,
