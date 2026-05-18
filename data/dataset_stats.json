@@ -1,0 +1,143 @@
+{
+  "per_split": {
+    "train": {
+      "n_samples": 9277,
+      "n_images": 228,
+      "type_dist": {
+        "attribute": 2649,
+        "spatial": 912,
+        "yes_no": 3282,
+        "recognition": 1391,
+        "counting": 912,
+        "other": 131
+      },
+      "category_dist": {
+        "banh_mi_thit": 1047,
+        "banh_xeo_viet_nam": 849,
+        "bun_bo_hue": 970,
+        "goi_cuon_viet_nam": 890,
+        "banh_mi_pate": 821,
+        "banh_uot": 902,
+        "com_tam_suon_bi_cha": 1065,
+        "banh_bao": 811,
+        "banh_chung": 855,
+        "pho_bo_viet_nam": 1067
+      },
+      "answer_len": {
+        "min": 1,
+        "max": 4,
+        "mean": 1.49,
+        "dist": {
+          "1": 5539,
+          "2": 3028,
+          "3": 584,
+          "4": 126
+        }
+      },
+      "question_len": {
+        "min": 5,
+        "max": 18,
+        "mean": 9.57
+      }
+    },
+    "val": {
+      "n_samples": 1178,
+      "n_images": 29,
+      "type_dist": {
+        "attribute": 341,
+        "recognition": 169,
+        "spatial": 116,
+        "yes_no": 418,
+        "counting": 116,
+        "other": 18
+      },
+      "category_dist": {
+        "com_tam_suon_bi_cha": 121,
+        "banh_xeo_viet_nam": 125,
+        "banh_mi_thit": 121,
+        "goi_cuon_viet_nam": 124,
+        "banh_chung": 123,
+        "banh_uot": 123,
+        "banh_bao": 122,
+        "bun_bo_hue": 119,
+        "banh_mi_pate": 80,
+        "pho_bo_viet_nam": 120
+      },
+      "answer_len": {
+        "min": 1,
+        "max": 4,
+        "mean": 1.49,
+        "dist": {
+          "1": 703,
+          "2": 386,
+          "3": 72,
+          "4": 17
+        }
+      },
+      "question_len": {
+        "min": 5,
+        "max": 19,
+        "mean": 9.61
+      }
+    },
+    "test": {
+      "n_samples": 1172,
+      "n_images": 29,
+      "type_dist": {
+        "counting": 116,
+        "attribute": 341,
+        "recognition": 170,
+        "spatial": 116,
+        "yes_no": 414,
+        "other": 15
+      },
+      "category_dist": {
+        "pho_bo_viet_nam": 118,
+        "banh_xeo_viet_nam": 123,
+        "banh_chung": 123,
+        "banh_uot": 119,
+        "banh_mi_pate": 82,
+        "banh_mi_thit": 123,
+        "com_tam_suon_bi_cha": 123,
+        "banh_bao": 120,
+        "bun_bo_hue": 121,
+        "goi_cuon_viet_nam": 120
+      },
+      "answer_len": {
+        "min": 1,
+        "max": 4,
+        "mean": 1.49,
+        "dist": {
+          "1": 701,
+          "2": 380,
+          "3": 76,
+          "4": 15
+        }
+      },
+      "question_len": {
+        "min": 5,
+        "max": 19,
+        "mean": 9.51
+      }
+    }
+  },
+  "global": {
+    "n_samples_total": 11627,
+    "n_images_total": 286,
+    "n_categories": 10,
+    "split_ratio": {
+      "train": 0.798,
+      "val": 0.101,
+      "test": 0.101
+    },
+    "answer_vocab_size": 63,
+    "question_type_dist_total": {
+      "attribute": 3331,
+      "spatial": 1144,
+      "yes_no": 4114,
+      "recognition": 1730,
+      "counting": 1144,
+      "other": 164
+    }
+  }
+}
