@@ -13,13 +13,36 @@ _KAGGLE_PKGS = [
     "anthropic",
 ]
 
-def _install(pkg: str):
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "-q", "--upgrade", pkg],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
+# Packages cần BUỘC upgrade (Kaggle có sẵn nhưng phiên bản quá cũ)
+_KAGGLE_PKGS_FORCE = [
+    "bitsandbytes>=0.46.1",   # 4-bit NF4 quantization cho B2
+    "peft>=0.11.0",           # LoRA adapter
+    "transformers>=4.45.0",   # Qwen2-VL support
+    "accelerate>=0.34.0",     # device_map dispatcher
+]
+
+def _install(pkg: str, upgrade: bool = True):
+    args = [sys.executable, "-m", "pip", "install", "-q"]
+    if upgrade:
+        args.append("--upgrade")
+    args.append(pkg)
+    subprocess.check_call(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+def _version_ok(pkg_spec: str) -> bool:
+    """Check installed version >= required."""
+    import importlib.metadata as md
+    try:
+        name, _, req = pkg_spec.partition(">=")
+        if not req:
+            return True
+        installed = md.version(name.strip())
+        from packaging.version import Version
+        return Version(installed) >= Version(req.strip())
+    except Exception:
+        return False
 
 print("[setup] Checking / installing packages…")
+# Cài các package thiếu (skip nếu đã có)
 for _pkg in _KAGGLE_PKGS:
     _mod = _pkg.split(">=")[0].split("==")[0].replace("-", "_")
     try:
@@ -28,7 +51,21 @@ for _pkg in _KAGGLE_PKGS:
         print(f"  pip install {_pkg}…", end=" ", flush=True)
         _install(_pkg)
         print("done")
+
+# Force upgrade các package có version cũ
+for _pkg in _KAGGLE_PKGS_FORCE:
+    if _version_ok(_pkg):
+        continue
+    print(f"  pip install -U {_pkg}…", end=" ", flush=True)
+    try:
+        _install(_pkg)
+        print("done")
+    except subprocess.CalledProcessError as e:
+        print(f"FAILED ({e})")
+
 print("[setup] Packages OK\n")
+print("[setup] NOTE: nếu vừa upgrade transformers/bitsandbytes/peft, "
+      "bạn cần RESTART KERNEL để load module mới!\n")
 
 # NLTK data (METEOR cần wordnet)
 import nltk
@@ -76,19 +113,37 @@ if IS_KAGGLE:
     WORKING_DIR.mkdir(exist_ok=True)
 
     # Tự động tìm data/ và checkpoints/ trong toàn bộ /kaggle/input/
+    # Hỗ trợ cả mount path nested kiểu /kaggle/input/datasets/<user>/<slug>/
     def _find_dir(name: str) -> Optional[Path]:
-        # Ưu tiên theo slug đã cấu hình
+        # 1. Ưu tiên theo slug đã cấu hình
         slug_path = KAGGLE_INPUT / KAGGLE_DATASET_SLUG / name
-        if slug_path.exists():
+        if slug_path.exists() and slug_path.is_dir():
             return slug_path
-        # Fallback: tìm toàn bộ input
+        # 2. Scan 1 cấp (chuẩn Kaggle: /kaggle/input/<slug>/<name>)
         for p in sorted(KAGGLE_INPUT.glob(f"*/{name}")):
-            return p
+            if p.is_dir():
+                return p
+        # 3. Scan đệ quy — bắt mọi cấu trúc nested
+        for p in sorted(KAGGLE_INPUT.rglob(name)):
+            if p.is_dir() and ".ipynb_checkpoints" not in str(p):
+                return p
         return None
 
     _data_dir  = _find_dir("data")
     _ckpt_dir  = _find_dir("checkpoints")
     _res_dir   = _find_dir("results")
+
+    # Debug: in cấu trúc /kaggle/input để dễ chẩn đoán
+    print("[app] /kaggle/input/ contents:")
+    try:
+        for top in sorted(KAGGLE_INPUT.iterdir())[:5]:
+            print(f"        ├── {top.name}/")
+            if top.is_dir():
+                for sub in sorted(top.iterdir())[:8]:
+                    marker = "/" if sub.is_dir() else ""
+                    print(f"        │   ├── {sub.name}{marker}")
+    except Exception as e:
+        print(f"        (lỗi liệt kê: {e})")
 
     DATA_DIR    = _data_dir  or WORKING_DIR / "data"
     CKPT_DIR    = _ckpt_dir  or WORKING_DIR / "checkpoints"
@@ -1117,13 +1172,29 @@ print(f"  B2 LoRA   : {'[OK]' if CKPT_B2_LORA.exists() else '[MISSING]'}")
 print(f"  results   : {'[OK]' if AGG_DF is not None    else '[MISSING]'}")
 print("=" * 62 + "\n")
 
+# ─── Tìm port trống (Kaggle thường đã chiếm 7860) ──────────────────────────
+def _free_port(start: int = 7860, span: int = 50) -> int:
+    import socket
+    for p in range(start, start + span):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("0.0.0.0", p))
+                return p
+            except OSError:
+                continue
+    return 0  # 0 → để OS tự chọn
+
+_PORT = int(os.environ.get("GRADIO_SERVER_PORT", 0)) or _free_port()
+print(f"[app] Launching Gradio on port {_PORT or 'auto'} (share=True) …")
+
 demo = build_app()
-demo.launch(
+demo.queue(default_concurrency_limit=1, max_size=20).launch(
     server_name = "0.0.0.0",
-    server_port = 7860,
-    share       = True,      
-    inbrowser   = False,      
+    server_port = _PORT or None,   # None → Gradio tự chọn
+    share       = True,            # ← BẮT BUỘC trên Kaggle để lấy public URL
+    inbrowser   = False,           # ← Không mở browser trên Kaggle
     debug       = False,
     show_error  = True,
     quiet       = False,
+    prevent_thread_lock = False,
 )
